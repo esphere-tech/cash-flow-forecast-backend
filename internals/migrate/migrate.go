@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	db := db.Connect()
+	db.Connect()
 
-	db.AutoMigrate(&models.User{}, &models.CashEntry{})
+	db.DB.AutoMigrate(&models.User{}, &models.CashEntry{})
 }

@@ -52,5 +52,4 @@ tmp/
 temp/
 *.tmp
 
-.env
-.env.local
+requests.http

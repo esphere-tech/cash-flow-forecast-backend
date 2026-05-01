@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CashEntry struct {
@@ -13,4 +14,12 @@ type CashEntry struct {
 	Description string    `gorm:"type:text"`
 	Date        string    `gorm:"type:date;not null"`
 	CreatedAt   int64     `gorm:"autoCreateTime"`
+}
+
+func (c *CashEntry) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == uuid.Nil {
+		c.ID = uuid.New()
+	}
+
+	return nil
 }

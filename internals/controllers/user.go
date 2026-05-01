@@ -9,8 +9,20 @@ import (
 	"github.com/waltertaya/cash-flow-forecast-backend/internals/models"
 )
 
-func SignUp(c *gin.Context) {
+func setAuthCookie(c *gin.Context, token string, maxAge int) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		MaxAge:   maxAge,
+		Path:     "/",
+		Domain:   "",           // empty = no domain restriction
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,  // required for cross-origin
+	})
+}
 
+func SignUp(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=6"`
@@ -43,13 +55,18 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("auth_token", token, 3600*24, "/", "", true, true)
+	setAuthCookie(c, token, 3600*24)
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
+	// Return user so the frontend can populate auth state immediately
+	c.JSON(http.StatusCreated, gin.H{
+		"user": gin.H{
+			"id":    user.ID,
+			"email": user.Email,
+		},
+	})
 }
 
 func Login(c *gin.Context) {
-
 	var input struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
@@ -77,32 +94,42 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// c.SetCookie("auth_token", token, 3600*24, "/", "localhost", false, true) // Expires in 24 hours, HttpOnly, Secure in production
-	c.SetCookie("auth_token", token, 3600*24, "/", "", true, true)
-	c.JSON(http.StatusOK, gin.H{"message": "Logged in successfully"})
+	setAuthCookie(c, token, 3600*24)
+
+	// Return user so the frontend can populate auth state immediately
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"id":    user.ID,
+			"email": user.Email,
+		},
+	})
 }
 
 func Logout(c *gin.Context) {
-	c.SetCookie("auth_token", "", -1, "/", "localhost", false, true) // Expires immediately, HttpOnly, Secure in production
+	// MaxAge=-1 tells the browser to delete the cookie immediately.
+	// Must match the same Path, Domain, Secure, SameSite as when it was set.
+	setAuthCookie(c, "", -1)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
 func Me(c *gin.Context) {
 	userID, exists := c.Get("user_id")
-
 	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
 		return
 	}
 
 	var user models.User
 	if err := db.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
 		return
 	}
 
+	// Consistent envelope so frontend extractUser() works the same as login/signup
 	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"email": user.Email,
+		"user": gin.H{
+			"id":    user.ID,
+			"email": user.Email,
+		},
 	})
 }

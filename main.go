@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -11,13 +12,12 @@ import (
 )
 
 func init() {
-	db.Connect()
-
 	// load the env variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	if err := godotenv.Load(); err != nil {
+		log.Printf(".env file not found, using environment variables")
 	}
+
+	db.Connect()
 }
 
 func main() {
@@ -26,5 +26,10 @@ func main() {
 
 	api.SetupRoutes(r)
 
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	r.Run(":" + port)
 }

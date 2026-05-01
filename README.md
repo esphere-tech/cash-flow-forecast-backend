@@ -8,7 +8,7 @@ A robust and scalable REST API built with Go and Gin for managing personal cash 
 - **Cash Entry Management** — Create, read, update, and delete cash entries (inflows/outflows)
 - **Bulk Operations** — Import multiple cash entries at once
 - **UUID-based IDs** — Secure, collision-resistant identifiers
-- **SQLite Database** — Lightweight, file-based persistence
+- **Neon PostgreSQL** — Persistent cloud database storage
 - **CORS Support** — Cross-origin request handling
 - **Docker Ready** — Containerized deployment with multi-stage builds
 - **Structured Logging** — Request/response tracking and error diagnostics
@@ -17,7 +17,7 @@ A robust and scalable REST API built with Go and Gin for managing personal cash 
 
 - **Language:** Go 1.21+
 - **Framework:** Gin Web Framework
-- **Database:** SQLite with GORM ORM
+- **Database:** PostgreSQL (Neon) with GORM ORM
 - **Authentication:** JWT (github.com/golang-jwt/jwt)
 - **ID Generation:** UUID (github.com/google/uuid)
 - **Environment:** godotenv
@@ -25,7 +25,7 @@ A robust and scalable REST API built with Go and Gin for managing personal cash 
 ## Prerequisites
 
 - Go 1.21 or higher
-- SQLite 3
+- A Neon PostgreSQL database URL
 - Docker & Docker Compose (optional)
 
 ## Installation
@@ -57,7 +57,7 @@ Create a `.env` file in the project root:
 ```env
 JWT_SECRET=your-secret-key-here
 PORT=8080
-DATABASE_URL=database/cashflow.db
+DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
 ```
 
 ## Running the Project
@@ -323,7 +323,6 @@ cash-flow-forecast-backend/
 ├── .env.example             # Environment template
 ├── .gitignore               # Git ignore rules
 ├── README.md                # This file
-├── database/                # SQLite database
 ├── internals/
 │   ├── api/
 │   │   └── routes.go        # API route definitions

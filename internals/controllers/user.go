@@ -37,6 +37,14 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
+	token, err := helpers.GenerateJWT(user.ID.String())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.SetCookie("auth_token", token, 3600*24, "/", "", true, true)
+
 	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
@@ -69,7 +77,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("auth_token", token, 3600*24, "/", "localhost", false, true) // Expires in 24 hours, HttpOnly, Secure in production
+	// c.SetCookie("auth_token", token, 3600*24, "/", "localhost", false, true) // Expires in 24 hours, HttpOnly, Secure in production
+	c.SetCookie("auth_token", token, 3600*24, "/", "", true, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged in successfully"})
 }
 
